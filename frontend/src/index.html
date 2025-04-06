@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <title>Portfólio de Design & Arte</title>
+  <base href="./">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Portfólio profissional de Design e Arte - Transformando ideias em experiências visuais únicas">
+  <link rel="icon" type="image/x-icon" href="favicon.ico">
+  <link rel="stylesheet" href="https://unpkg.com/aos@next/dist/aos.css" />
+  <style>
+    /* Estilos para o fallback */
+    .fallback-container {
+      display: none;
+      padding: 20px;
+      max-width: 800px;
+      margin: 0 auto;
+      font-family: Arial, sans-serif;
+    }
+    .fallback-image {
+      max-width: 100%;
+      height: auto;
+      margin-bottom: 20px;
+      border-radius: 8px;
+    }
+    .fallback-header {
+      margin-bottom: 20px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid #ddd;
+    }
+  </style>
+</head>
+<body>
+  <app-root></app-root>
+  
+  <!-- Conteúdo de fallback caso o Angular não carregue -->
+  <div id="fallback" class="fallback-container">
+    <div class="fallback-header">
+      <h1>Portfólio de Design & Arte</h1>
+      <p>Transformando ideias em experiências visuais únicas</p>
+    </div>
+    
+    <img src="assets/images/site_Prancheta 1 cópia 4.png" alt="Design Showcase" class="fallback-image">
+    
+    <h2>Meus Trabalhos</h2>
+    <div style="display: flex; flex-wrap: wrap; gap: 20px; margin-bottom: 30px;">
+      <img src="assets/images/site_Prancheta 1 cópia 2.png" alt="Projeto 1" style="width: 30%; min-width: 250px;">
+      <img src="assets/images/site_Prancheta 1 cópia 3.png" alt="Projeto 2" style="width: 30%; min-width: 250px;">
+      <img src="assets/images/site_Prancheta 1 cópia 5.png" alt="Projeto 3" style="width: 30%; min-width: 250px;">
+    </div>
+    
+    <h2>Sobre Mim</h2>
+    <img src="assets/images/jack.jpg" alt="Sobre Mim" style="max-width: 300px; margin: 20px 0;">
+    <p>Designer apaixonada por criar experiências visuais únicas.</p>
+  </div>
+
+  <script>
+    // Script para detectar se o Angular carregou
+    setTimeout(function() {
+      var appRoot = document.querySelector('app-root');
+      var fallback = document.getElementById('fallback');
+      
+      // Se o app-root estiver vazio após 3 segundos, mostrar o fallback
+      if (appRoot && appRoot.children.length === 0) {
+        console.log('Angular não carregou. Mostrando conteúdo de fallback.');
+        fallback.style.display = 'block';
+      }
+    }, 3000);
+  </script>
+
+  <script src="https://unpkg.com/aos@next/dist/aos.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      AOS.init({
+        duration: 800,
+        easing: 'ease-in-out',
+        once: false
+      });
+    });
+  </script>
+</body>
+</html>

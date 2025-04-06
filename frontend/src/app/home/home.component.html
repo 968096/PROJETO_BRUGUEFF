@@ -1,0 +1,199 @@
+<div class="home-container">
+  <!-- Fundo Circular com Efeito de Paralaxe -->
+  <div class="background-circular" #bgCircular></div>
+  
+  <!-- Botão Admin Dashboard -->
+  <button class="admin-button" (click)="toggleAdminDashboard()" *ngIf="isAdminMode">
+    <span *ngIf="!isAdminDashboardOpen">⚙️ Configurar</span>
+    <span *ngIf="isAdminDashboardOpen">❌ Fechar</span>
+  </button>
+  
+  <!-- Admin Dashboard -->
+  <div class="admin-dashboard" *ngIf="isAdminDashboardOpen">
+    <div class="dashboard-header">
+      <h2>Painel de Configuração</h2>
+      <button class="close-button" (click)="toggleAdminDashboard()">×</button>
+    </div>
+    
+    <div class="dashboard-tabs">
+      <button 
+        *ngFor="let tab of adminTabs" 
+        [class.active]="activeAdminTab === tab.id"
+        (click)="setActiveAdminTab(tab.id)">
+        {{ tab.name }}
+      </button>
+    </div>
+    
+    <div class="dashboard-content">
+      <!-- Cores -->
+      <div class="tab-content" *ngIf="activeAdminTab === 'colors'">
+        <h3>Cores</h3>
+        <div class="color-group">
+          <div class="color-item" *ngFor="let color of siteColors">
+            <label>{{ color.label }}</label>
+            <div class="color-picker-container">
+              <input type="color" [value]="color.value" (change)="updateColor(color.id, $event)">
+              <input type="text" [value]="color.value" (change)="updateColor(color.id, $event)">
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Fontes -->
+      <div class="tab-content" *ngIf="activeAdminTab === 'fonts'">
+        <h3>Tipografia</h3>
+        <div class="font-group">
+          <div class="font-item">
+            <label>Fonte Principal</label>
+            <select [(ngModel)]="siteConfig.mainFont" (change)="updateConfig()">
+              <option *ngFor="let font of availableFonts" [value]="font">{{ font }}</option>
+            </select>
+          </div>
+          <div class="font-size-item">
+            <label>Tamanho de Título (px)</label>
+            <input type="number" [(ngModel)]="siteConfig.titleSize" min="16" max="72" (change)="updateConfig()">
+          </div>
+          <div class="font-size-item">
+            <label>Tamanho de Texto (px)</label>
+            <input type="number" [(ngModel)]="siteConfig.textSize" min="12" max="24" (change)="updateConfig()">
+          </div>
+        </div>
+      </div>
+      
+      <!-- Layout -->
+      <div class="tab-content" *ngIf="activeAdminTab === 'layout'">
+        <h3>Layout</h3>
+        <div class="layout-group">
+          <div class="layout-item">
+            <label>Espaçamento (px)</label>
+            <input type="range" min="10" max="50" [(ngModel)]="siteConfig.spacing" (change)="updateConfig()">
+            <span>{{ siteConfig.spacing }}px</span>
+          </div>
+          <div class="layout-item">
+            <label>Arredondamento de Bordas (px)</label>
+            <input type="range" min="0" max="20" [(ngModel)]="siteConfig.borderRadius" (change)="updateConfig()">
+            <span>{{ siteConfig.borderRadius }}px</span>
+          </div>
+          <div class="layout-toggle">
+            <label>Mostrar Fundo Circular</label>
+            <div class="toggle-switch">
+              <input type="checkbox" id="showBg" [(ngModel)]="siteConfig.showBackgroundCircle" (change)="updateConfig()">
+              <label for="showBg"></label>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Animações -->
+      <div class="tab-content" *ngIf="activeAdminTab === 'animations'">
+        <h3>Animações</h3>
+        <div class="animation-group">
+          <div class="animation-item">
+            <label>Velocidade de Animações</label>
+            <select [(ngModel)]="siteConfig.animationSpeed" (change)="updateConfig()">
+              <option value="slow">Lenta</option>
+              <option value="normal">Normal</option>
+              <option value="fast">Rápida</option>
+            </select>
+          </div>
+          <div class="animation-toggle">
+            <label>Ativar Efeito Paralaxe</label>
+            <div class="toggle-switch">
+              <input type="checkbox" id="enableParallax" [(ngModel)]="siteConfig.enableParallax" (change)="updateConfig()">
+              <label for="enableParallax"></label>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="dashboard-actions">
+      <button class="action-button apply" (click)="applyChanges()">Aplicar</button>
+      <button class="action-button save" (click)="saveChanges()">Salvar</button>
+      <button class="action-button reset" (click)="resetChanges()">Resetar</button>
+    </div>
+  </div>
+  
+  <!-- Hero Section -->
+  <section class="hero-section">
+    <div class="container">
+      <div class="hero-content" data-aos="fade-up">
+        <h1>Design Criativo & Arte</h1>
+        <p>Transformando ideias em experiências visuais únicas e memoráveis</p>
+        <a href="#portfolio" class="btn">Ver Portfólio</a>
+      </div>
+      <div class="scroll-indicator">
+        <div class="mouse"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Portfolio Section -->
+  <section id="portfolio" class="portfolio-section">
+    <div class="container">
+      <h2 data-aos="fade-up">Meus Trabalhos</h2>
+      <div class="row">
+        <div *ngFor="let item of portfolioItems; let i = index" 
+             class="col-md-4" 
+             [attr.data-aos]="'fade-up'" 
+             [attr.data-aos-delay]="100 * (i + 1)">
+          <div class="portfolio-item">
+            <img [src]="item.imageUrl" [alt]="item.title" class="img-fluid">
+            <div class="portfolio-overlay">
+              <h3>{{ item.title }}</h3>
+              <p>{{ item.description }}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- About Section -->
+  <section id="about" class="about-section">
+    <div class="container">
+      <div class="about-content">
+        <h2 data-aos="fade-up">Sobre Mim</h2>
+        <div class="about-img-container" data-aos="zoom-in">
+          <img [src]="designerInfo.imageUrl" [alt]="designerInfo.name" class="about-img">
+        </div>
+        <p data-aos="fade-up" data-aos-delay="200">{{ designerInfo.bio }}</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Contact Section -->
+  <section id="contact" class="contact-section">
+    <div class="container">
+      <div class="contact-form" data-aos="fade-up">
+        <h2>Vamos Trabalhar Juntos?</h2>
+        <form (submit)="onSubmitContactForm($event)">
+          <div class="mb-3">
+            <input 
+              type="text" 
+              name="name"
+              [(ngModel)]="contactForm.name"
+              placeholder="Seu Nome" 
+              required>
+          </div>
+          <div class="mb-3">
+            <input 
+              type="email" 
+              name="email"
+              [(ngModel)]="contactForm.email"
+              placeholder="Seu Email" 
+              required>
+          </div>
+          <div class="mb-3">
+            <textarea 
+              name="message"
+              [(ngModel)]="contactForm.message"
+              placeholder="Conte-me sobre seu projeto" 
+              required></textarea>
+          </div>
+          <button type="submit" class="btn" data-aos="zoom-in" data-aos-delay="100">Enviar Mensagem</button>
+        </form>
+      </div>
+    </div>
+  </section>
+</div>

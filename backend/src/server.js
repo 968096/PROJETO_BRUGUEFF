@@ -3,6 +3,7 @@ const cors = require('cors');
 const bodyParser = require('body-parser');
 const fs = require('fs');
 const path = require('path');
+const axios = require('axios');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -11,12 +12,55 @@ const PORT = process.env.PORT || 3000;
 app.use(cors());
 app.use(bodyParser.json());
 
+// Função para verificar autenticação no GitHub
+async function verifyGitHubAuth(username, password) {
+  try {
+    // Se não houver username ou password, retorna falso
+    if (!username || !password) {
+      return false;
+    }
+    
+    // Criar token de autenticação básica
+    const auth = Buffer.from(`${username}:${password}`).toString('base64');
+    
+    // Fazer requisição para a API do GitHub para verificar as credenciais
+    const response = await axios.get('https://api.github.com/user', {
+      headers: {
+        'Authorization': `Basic ${auth}`,
+        'User-Agent': 'Portfolio-Config-App'
+      }
+    });
+    
+    // Se a requisição for bem-sucedida, o usuário está autenticado
+    return response.status === 200;
+  } catch (error) {
+    console.error('Erro ao verificar autenticação:', error.message);
+    return false;
+  }
+}
+
 // Rota para atualizar arquivos SCSS
-app.post('/api/update-scss', (req, res) => {
-  const { content, filePath } = req.body;
+app.post('/api/update-scss', async (req, res) => {
+  const { content, filePath, githubUser, password } = req.body;
   
   if (!content || !filePath) {
     return res.status(400).json({ error: 'Conteúdo e caminho do arquivo são obrigatórios' });
+  }
+  
+  // Verificar autenticação se fornecida
+  if (githubUser && password) {
+    try {
+      const isAuthenticated = await verifyGitHubAuth(githubUser, password);
+      
+      if (!isAuthenticated) {
+        return res.status(401).json({ error: 'Autenticação falhou. Verifique suas credenciais.' });
+      }
+      
+      console.log('Usuário autenticado com sucesso:', githubUser);
+    } catch (error) {
+      console.error('Erro na autenticação:', error);
+      return res.status(500).json({ error: 'Erro ao verificar autenticação' });
+    }
   }
   
   try {
@@ -47,7 +91,11 @@ app.post('/api/update-scss', (req, res) => {
       }
     }
     
-    res.json({ success: true, message: 'Arquivo atualizado com sucesso' });
+    res.json({ 
+      success: true, 
+      message: 'Arquivo atualizado com sucesso',
+      user: githubUser ? githubUser : 'anônimo'
+    });
   } catch (error) {
     console.error('Erro ao atualizar arquivo:', error);
     res.status(500).json({ error: `Erro ao atualizar arquivo: ${error.message}` });

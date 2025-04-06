@@ -469,6 +469,55 @@ section {
   }
 }
 
+// Estilo para a imagem do perfil que aparece ao rolar
+.hidden-profile-img {
+  opacity: 0;
+  transform: translateY(50px) scale(0.8);
+  filter: blur(5px);
+  pointer-events: none; // Evitar interação enquanto estiver escondida
+  animation: profile-img-disappear 0.8s ease forwards;
+}
+
+// Classe aplicada quando a imagem se torna visível
+.visible-profile-img {
+  animation: profile-img-appear 1.5s cubic-bezier(0.18, 0.89, 0.32, 1.28) forwards;
+}
+
+// Animação de entrada para imagem do perfil
+@keyframes profile-img-appear {
+  0% {
+    opacity: 0;
+    transform: translateY(50px) scale(0.8);
+    filter: blur(5px);
+  }
+  60% {
+    opacity: 1;
+    filter: blur(0);
+  }
+  80% {
+    transform: translateY(-10px) scale(1.05);
+  }
+  100% {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+    filter: blur(0);
+  }
+}
+
+// Animação de saída para imagem do perfil
+@keyframes profile-img-disappear {
+  0% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    filter: blur(0);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(50px) scale(0.8);
+    filter: blur(5px);
+  }
+}
+
 // About Section
 .about-section {
   text-align: center;
@@ -530,6 +579,12 @@ section {
     
     &:hover {
       transform: scale(1.08);
+      box-shadow: 0 0 30px rgba(0, 0, 0, 0.15);
+    }
+    
+    // Aplicar animação quando a classe for removida via JavaScript
+    &:not(.hidden-profile-img) {
+      animation: profile-img-appear 1.5s cubic-bezier(0.18, 0.89, 0.32, 1.28) forwards;
     }
   }
   

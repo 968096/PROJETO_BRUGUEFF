@@ -1,9 +1,10 @@
-import { Component, OnInit, OnDestroy, ViewChild, ElementRef, HostListener, Renderer2, Inject } from '@angular/core';
+import { Component, OnInit, OnDestroy, ViewChild, ElementRef, HostListener, Renderer2, Inject, AfterViewInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { DOCUMENT } from '@angular/common';
 import { HttpClient, HttpClientModule } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
+import { trigger, transition, style, animate } from '@angular/animations';
 
 interface SiteColor {
   id: string;
@@ -12,15 +13,27 @@ interface SiteColor {
   cssVar: string;
 }
 
-interface SiteConfig {
-  mainFont: string;
-  titleSize: number;
-  textSize: number;
-  spacing: number;
-  borderRadius: number;
-  showBackgroundCircle: boolean;
-  animationSpeed: 'slow' | 'normal' | 'fast';
-  enableParallax: boolean;
+export interface SiteConfig {
+  colors: {
+    primary: string;
+    secondary: string;
+    accent: string;
+    text: string;
+    background: string;
+  };
+  fonts: {
+    family: string;
+  };
+  layout: {
+    titleSize: number;
+    textSize: number;
+    spacing: number;
+    borderRadius: number;
+    showCircleBg: boolean;
+  };
+  animations: {
+    speed: string;
+  };
 }
 
 @Component({
@@ -28,10 +41,22 @@ interface SiteConfig {
   standalone: true,
   imports: [CommonModule, FormsModule, HttpClientModule],
   templateUrl: './home.component.html',
-  styleUrls: ['./home.component.scss']
+  styleUrls: ['./home.component.scss'],
+  animations: [
+    trigger('fadeInOut', [
+      transition(':enter', [
+        style({ opacity: 0, transform: 'translateY(-20px)' }),
+        animate('300ms ease-in', style({ opacity: 1, transform: 'translateY(0)' }))
+      ]),
+      transition(':leave', [
+        animate('300ms ease-out', style({ opacity: 0, transform: 'translateY(-20px)' }))
+      ])
+    ])
+  ]
 })
-export class HomeComponent implements OnInit, OnDestroy {
+export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
   @ViewChild('bgCircular') bgCircular!: ElementRef;
+  @ViewChild('aboutImg') aboutImg!: ElementRef;
   
   // Admin Dashboard
   isAdminMode = true; // Defina como false para produção
@@ -69,14 +94,26 @@ export class HomeComponent implements OnInit, OnDestroy {
   
   // Configurações do site
   siteConfig: SiteConfig = {
-    mainFont: 'Montserrat',
-    titleSize: 36,
-    textSize: 16,
-    spacing: 20,
-    borderRadius: 0,
-    showBackgroundCircle: true,
-    animationSpeed: 'normal',
-    enableParallax: true
+    colors: {
+      primary: '#dfe4d1',
+      secondary: '#ff4081',
+      accent: '#ff4081',
+      text: '#333333',
+      background: '#dfe4d1'
+    },
+    fonts: {
+      family: 'Montserrat'
+    },
+    layout: {
+      titleSize: 36,
+      textSize: 16,
+      spacing: 20,
+      borderRadius: 0,
+      showCircleBg: true
+    },
+    animations: {
+      speed: 'normal'
+    }
   };
   
   // Cópia de backup das configurações originais
@@ -129,6 +166,13 @@ export class HomeComponent implements OnInit, OnDestroy {
    */
   private scrollListener: any;
 
+  // Adicionar propriedades para notificações
+  notificationMessage: string = '';
+  showNotificationFlag: boolean = false;
+
+  // Controle para animação da imagem do perfil
+  isAboutImageVisible: boolean = false;
+
   constructor(
     private renderer: Renderer2, 
     @Inject(DOCUMENT) private document: Document,
@@ -152,6 +196,21 @@ export class HomeComponent implements OnInit, OnDestroy {
     if (this.scrollListener) {
       window.removeEventListener('scroll', this.scrollListener);
     }
+  }
+
+  ngAfterViewInit(): void {
+    // Adicionar propriedades para notificações
+    this.notificationMessage = '';
+    this.showNotificationFlag = false;
+    
+    // Inicialmente, definir a imagem como não visível
+    this.isAboutImageVisible = false;
+    
+    // Verificar a posição de scroll após um curto atraso
+    // (para garantir que todos os elementos estejam renderizados)
+    setTimeout(() => {
+      this.checkScrollPosition();
+    }, 500);
   }
   
   // Dashboard Methods
@@ -184,13 +243,13 @@ export class HomeComponent implements OnInit, OnDestroy {
     
     // Aplicar mudanças em tempo real
     // Atualizar fonte
-    this.loadFont(this.siteConfig.mainFont);
-    document.documentElement.style.setProperty('--title-size', `${this.siteConfig.titleSize}px`);
-    document.documentElement.style.setProperty('--text-size', `${this.siteConfig.textSize}px`);
+    this.loadFont(this.siteConfig.fonts.family);
+    document.documentElement.style.setProperty('--title-size', `${this.siteConfig.layout.titleSize}px`);
+    document.documentElement.style.setProperty('--text-size', `${this.siteConfig.layout.textSize}px`);
     
     // Atualizar layout
-    document.documentElement.style.setProperty('--spacing', `${this.siteConfig.spacing}px`);
-    document.documentElement.style.setProperty('--border-radius', `${this.siteConfig.borderRadius}px`);
+    document.documentElement.style.setProperty('--spacing', `${this.siteConfig.layout.spacing}px`);
+    document.documentElement.style.setProperty('--border-radius', `${this.siteConfig.layout.borderRadius}px`);
     
     // Aplicar as atualizações visuais imediatamente
     const headings = document.querySelectorAll('h1, h2');
@@ -200,31 +259,31 @@ export class HomeComponent implements OnInit, OnDestroy {
     
     // Atualizar tamanhos de fonte
     headings.forEach(heading => {
-      (heading as HTMLElement).style.fontSize = `${this.siteConfig.titleSize * 0.8}px`;
+      (heading as HTMLElement).style.fontSize = `${this.siteConfig.layout.titleSize * 0.8}px`;
     });
     
     paragraphs.forEach(paragraph => {
-      (paragraph as HTMLElement).style.fontSize = `${this.siteConfig.textSize}px`;
+      (paragraph as HTMLElement).style.fontSize = `${this.siteConfig.layout.textSize}px`;
     });
     
     // Atualizar bordas
     elements.forEach(element => {
-      (element as HTMLElement).style.borderRadius = `${this.siteConfig.borderRadius}px`;
+      (element as HTMLElement).style.borderRadius = `${this.siteConfig.layout.borderRadius}px`;
     });
     
     // Atualizar espaçamento
     sections.forEach(section => {
-      (section as HTMLElement).style.padding = `${this.siteConfig.spacing * 3}px 0`;
+      (section as HTMLElement).style.padding = `${this.siteConfig.layout.spacing * 3}px 0`;
     });
     
     // Mostrar/esconder fundo circular
     if (this.bgCircular && this.bgCircular.nativeElement) {
-      this.bgCircular.nativeElement.style.display = this.siteConfig.showBackgroundCircle ? 'block' : 'none';
+      this.bgCircular.nativeElement.style.display = this.siteConfig.layout.showCircleBg ? 'block' : 'none';
     }
     
     // Atualizar velocidade de animação
     let animationMultiplier = 1;
-    switch (this.siteConfig.animationSpeed) {
+    switch (this.siteConfig.animations.speed) {
       case 'slow': animationMultiplier = 1.5; break;
       case 'fast': animationMultiplier = 0.5; break;
       default: animationMultiplier = 1;
@@ -239,22 +298,22 @@ export class HomeComponent implements OnInit, OnDestroy {
     });
     
     // Aplicar mudanças de fonte
-    this.loadFont(this.siteConfig.mainFont);
-    document.documentElement.style.setProperty('--title-size', `${this.siteConfig.titleSize}px`);
-    document.documentElement.style.setProperty('--text-size', `${this.siteConfig.textSize}px`);
+    this.loadFont(this.siteConfig.fonts.family);
+    document.documentElement.style.setProperty('--title-size', `${this.siteConfig.layout.titleSize}px`);
+    document.documentElement.style.setProperty('--text-size', `${this.siteConfig.layout.textSize}px`);
     
     // Aplicar mudanças de layout
-    document.documentElement.style.setProperty('--spacing', `${this.siteConfig.spacing}px`);
-    document.documentElement.style.setProperty('--border-radius', `${this.siteConfig.borderRadius}px`);
+    document.documentElement.style.setProperty('--spacing', `${this.siteConfig.layout.spacing}px`);
+    document.documentElement.style.setProperty('--border-radius', `${this.siteConfig.layout.borderRadius}px`);
     
     // Mostrar/esconder fundo circular
     if (this.bgCircular && this.bgCircular.nativeElement) {
-      this.bgCircular.nativeElement.style.display = this.siteConfig.showBackgroundCircle ? 'block' : 'none';
+      this.bgCircular.nativeElement.style.display = this.siteConfig.layout.showCircleBg ? 'block' : 'none';
     }
     
     // Aplicar velocidade de animação
     let animationMultiplier = 1;
-    switch (this.siteConfig.animationSpeed) {
+    switch (this.siteConfig.animations.speed) {
       case 'slow': animationMultiplier = 1.5; break;
       case 'fast': animationMultiplier = 0.5; break;
       default: animationMultiplier = 1;
@@ -267,27 +326,27 @@ export class HomeComponent implements OnInit, OnDestroy {
     const paragraphs = document.querySelectorAll('p');
     
     headings.forEach(heading => {
-      (heading as HTMLElement).style.fontSize = `${this.siteConfig.titleSize * 0.8}px`;
+      (heading as HTMLElement).style.fontSize = `${this.siteConfig.layout.titleSize * 0.8}px`;
     });
     
     paragraphs.forEach(paragraph => {
-      (paragraph as HTMLElement).style.fontSize = `${this.siteConfig.textSize}px`;
+      (paragraph as HTMLElement).style.fontSize = `${this.siteConfig.layout.textSize}px`;
     });
     
     // Atualizar bordas
     const elements = document.querySelectorAll('.portfolio-item, .contact-form, input, textarea, button');
     elements.forEach(element => {
-      (element as HTMLElement).style.borderRadius = `${this.siteConfig.borderRadius}px`;
+      (element as HTMLElement).style.borderRadius = `${this.siteConfig.layout.borderRadius}px`;
     });
     
     // Atualizar espaçamento
     const sections = document.querySelectorAll('section');
     sections.forEach(section => {
-      (section as HTMLElement).style.padding = `${this.siteConfig.spacing * 3}px 0`;
+      (section as HTMLElement).style.padding = `${this.siteConfig.layout.spacing * 3}px 0`;
     });
     
     // Ativar/desativar paralaxe
-    if (!this.siteConfig.enableParallax && this.bgCircular && this.bgCircular.nativeElement) {
+    if (!this.siteConfig.layout.showCircleBg && this.bgCircular && this.bgCircular.nativeElement) {
       this.bgCircular.nativeElement.style.transform = 'translate(-50%, -50%)';
     }
   }
@@ -326,19 +385,19 @@ $section-bg-light: ${this.siteColors.find(c => c.id === 'sectionLight')?.value |
 $section-bg-dark: ${this.siteColors.find(c => c.id === 'sectionDark')?.value || '#dfe4d1'};
 
 // Typography
-$main-font: '${this.siteConfig.mainFont}', sans-serif;
-$title-size: ${this.siteConfig.titleSize}px;
-$text-size: ${this.siteConfig.textSize}px;
+$main-font: '${this.siteConfig.fonts.family}', sans-serif;
+$title-size: ${this.siteConfig.layout.titleSize}px;
+$text-size: ${this.siteConfig.layout.textSize}px;
 
 // Layout
-$spacing: ${this.siteConfig.spacing}px;
-$border-radius: ${this.siteConfig.borderRadius}px;
+$spacing: ${this.siteConfig.layout.spacing}px;
+$border-radius: ${this.siteConfig.layout.borderRadius}px;
 
 // Feature Flags
-$show-background-circle: ${this.siteConfig.showBackgroundCircle};
-$enable-parallax: ${this.siteConfig.enableParallax};
-$animation-speed: ${this.siteConfig.animationSpeed === 'slow' ? 1.5 : 
-                    this.siteConfig.animationSpeed === 'fast' ? 0.5 : 1};
+$show-background-circle: ${this.siteConfig.layout.showCircleBg};
+$enable-parallax: ${this.siteConfig.layout.showCircleBg};
+$animation-speed: ${this.siteConfig.animations.speed === 'slow' ? 1.5 : 
+                    this.siteConfig.animations.speed === 'fast' ? 0.5 : 1};
 `;
 
       // Usar a API Fetch para enviar as alterações para o servidor
@@ -440,27 +499,27 @@ ${scssContent}
     });
     
     // Adicionar outras variáveis
-    cssContent += `  --title-size: ${this.siteConfig.titleSize}px;\n`;
-    cssContent += `  --text-size: ${this.siteConfig.textSize}px;\n`;
-    cssContent += `  --spacing: ${this.siteConfig.spacing}px;\n`;
-    cssContent += `  --border-radius: ${this.siteConfig.borderRadius}px;\n`;
+    cssContent += `  --title-size: ${this.siteConfig.layout.titleSize}px;\n`;
+    cssContent += `  --text-size: ${this.siteConfig.layout.textSize}px;\n`;
+    cssContent += `  --spacing: ${this.siteConfig.layout.spacing}px;\n`;
+    cssContent += `  --border-radius: ${this.siteConfig.layout.borderRadius}px;\n`;
     
     // Fechar o bloco
     cssContent += `}\n\n`;
     
     // Adicionar regra para fonte
     cssContent += `body {\n`;
-    cssContent += `  font-family: '${this.siteConfig.mainFont}', sans-serif;\n`;
+    cssContent += `  font-family: '${this.siteConfig.fonts.family}', sans-serif;\n`;
     cssContent += `}\n\n`;
     
     // Configuração para o fundo circular
     cssContent += `.background-circular {\n`;
-    cssContent += `  display: ${this.siteConfig.showBackgroundCircle ? 'block' : 'none'};\n`;
+    cssContent += `  display: ${this.siteConfig.layout.showCircleBg ? 'block' : 'none'};\n`;
     cssContent += `}\n\n`;
     
     // Configuração para velocidade de animações
     let animationMultiplier = 1;
-    switch (this.siteConfig.animationSpeed) {
+    switch (this.siteConfig.animations.speed) {
       case 'slow': animationMultiplier = 1.5; break;
       case 'fast': animationMultiplier = 0.5; break;
       default: animationMultiplier = 1;
@@ -521,7 +580,7 @@ ${scssContent}
    */
   @HostListener('window:scroll', ['$event'])
   onWindowScroll(event: Event): void {
-    if (this.siteConfig.enableParallax) {
+    if (this.siteConfig.layout.showCircleBg) {
       this.applyParallaxEffect();
     }
     this.checkScrollPosition();
@@ -557,7 +616,128 @@ ${scssContent}
    * Verifica a posição de scroll para atualizar animações conforme necessário
    */
   private checkScrollPosition(): void {
-    // Implementação futura: atualizar animações baseadas na posição do scroll
+    // Verificar se a seção "about" está visível
+    const aboutSection = document.getElementById('about');
+    if (aboutSection) {
+      const rect = aboutSection.getBoundingClientRect();
+      const windowHeight = window.innerHeight;
+      
+      // Considerar visível quando pelo menos 30% da seção está na tela
+      const visibilityThreshold = 0.3;
+      const visibleAmount = Math.min(windowHeight, rect.bottom) - Math.max(0, rect.top);
+      const isVisibleEnough = visibleAmount > (rect.height * visibilityThreshold);
+      
+      // Se a imagem existe no DOM
+      if (this.aboutImg && this.aboutImg.nativeElement) {
+        const imgElement = this.aboutImg.nativeElement;
+        
+        // Se a seção estiver visível o suficiente e a imagem ainda não foi mostrada
+        if (isVisibleEnough && !this.isAboutImageVisible) {
+          this.isAboutImageVisible = true;
+          
+          // Tornar a imagem visível
+          this.renderer.removeClass(imgElement, 'hidden-profile-img');
+          this.renderer.addClass(imgElement, 'visible-profile-img');
+          
+          console.log('Imagem do perfil revelada!');
+        } 
+        // Se a seção não estiver mais visível, esconder a imagem novamente
+        else if (!isVisibleEnough && this.isAboutImageVisible) {
+          this.isAboutImageVisible = false;
+          
+          // Esconder a imagem
+          this.renderer.removeClass(imgElement, 'visible-profile-img');
+          this.renderer.addClass(imgElement, 'hidden-profile-img');
+          
+          console.log('Imagem do perfil escondida!');
+        }
+      }
+    }
+  }
+
+  saveConfig() {
+    // Solicitar senha antes de salvar
+    const password = prompt('Digite sua senha do GitHub para salvar as alterações:');
+    
+    // Verificar se o usuário forneceu a senha
+    if (!password) {
+      this.showNotification('Operação cancelada. Senha não fornecida.');
+      return;
+    }
+    
+    // Salvar configurações no localStorage
+    localStorage.setItem('siteConfig', JSON.stringify(this.siteConfig));
+    
+    // Gerar conteúdo SCSS
+    const scssContent = this.generateScssContent();
+    
+    // Enviar para o backend para modificar o código-fonte
+    this.http.post('http://localhost:3000/api/update-scss', {
+      content: scssContent,
+      filePath: 'src/styles/variables.scss',
+      githubUser: 'a53833@alunos.ipb.pt',
+      password: password
+    }).subscribe({
+      next: (response: any) => {
+        console.log('Configurações salvas com sucesso:', response);
+        this.showNotification('Configurações salvas! O código-fonte foi atualizado.');
+      },
+      error: (error) => {
+        console.error('Erro ao salvar configurações:', error);
+        this.showNotification('Ocorreu um erro ao salvar. Verifique as credenciais ou se o servidor backend está em execução.');
+        
+        // Fallback: Criar arquivo para download
+        this.downloadScssFile(scssContent);
+      }
+    });
+  }
+
+  generateScssContent() {
+    const { colors, fonts, layout, animations } = this.siteConfig;
+    
+    // Gerar variáveis SCSS baseadas na configuração atual
+    return `// Arquivo gerado automaticamente pelo painel de configuração
+// Última atualização: ${new Date().toLocaleString()}
+
+// Cores
+$primary-color: ${colors.primary};
+$secondary-color: ${colors.secondary};
+$accent-color: ${colors.accent};
+$text-color: ${colors.text};
+$background-color: ${colors.background};
+
+// Tipografia
+$font-family: '${fonts.family}', sans-serif;
+$title-size: ${layout.titleSize}px;
+$text-size: ${layout.textSize}px;
+
+// Layout
+$spacing: ${layout.spacing}px;
+$border-radius: ${layout.borderRadius}px;
+$show-circle-bg: ${layout.showCircleBg};
+
+// Animações
+$animation-speed: ${animations.speed};
+`;
+  }
+
+  downloadScssFile(content: string) {
+    const element = document.createElement('a');
+    element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(content));
+    element.setAttribute('download', 'variables.scss');
+    element.style.display = 'none';
+    document.body.appendChild(element);
+    element.click();
+    document.body.removeChild(element);
+  }
+
+  showNotification(message: string) {
+    this.notificationMessage = message;
+    this.showNotificationFlag = true;
+    
+    setTimeout(() => {
+      this.showNotificationFlag = false;
+    }, 5000);
   }
 }
 

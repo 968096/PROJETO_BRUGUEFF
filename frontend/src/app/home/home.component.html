@@ -45,17 +45,17 @@
         <div class="font-group">
           <div class="font-item">
             <label>Fonte Principal</label>
-            <select [(ngModel)]="siteConfig.mainFont" (change)="updateConfig()">
+            <select [(ngModel)]="siteConfig.fonts.family" (change)="updateConfig()">
               <option *ngFor="let font of availableFonts" [value]="font">{{ font }}</option>
             </select>
           </div>
           <div class="font-size-item">
             <label>Tamanho de Título (px)</label>
-            <input type="number" [(ngModel)]="siteConfig.titleSize" min="16" max="72" (change)="updateConfig()">
+            <input type="number" [(ngModel)]="siteConfig.layout.titleSize" min="16" max="72" (change)="updateConfig()">
           </div>
           <div class="font-size-item">
             <label>Tamanho de Texto (px)</label>
-            <input type="number" [(ngModel)]="siteConfig.textSize" min="12" max="24" (change)="updateConfig()">
+            <input type="number" [(ngModel)]="siteConfig.layout.textSize" min="12" max="24" (change)="updateConfig()">
           </div>
         </div>
       </div>
@@ -66,18 +66,18 @@
         <div class="layout-group">
           <div class="layout-item">
             <label>Espaçamento (px)</label>
-            <input type="range" min="10" max="50" [(ngModel)]="siteConfig.spacing" (change)="updateConfig()">
-            <span>{{ siteConfig.spacing }}px</span>
+            <input type="range" min="10" max="50" [(ngModel)]="siteConfig.layout.spacing" (change)="updateConfig()">
+            <span>{{ siteConfig.layout.spacing }}px</span>
           </div>
           <div class="layout-item">
             <label>Arredondamento de Bordas (px)</label>
-            <input type="range" min="0" max="20" [(ngModel)]="siteConfig.borderRadius" (change)="updateConfig()">
-            <span>{{ siteConfig.borderRadius }}px</span>
+            <input type="range" min="0" max="20" [(ngModel)]="siteConfig.layout.borderRadius" (change)="updateConfig()">
+            <span>{{ siteConfig.layout.borderRadius }}px</span>
           </div>
           <div class="layout-toggle">
             <label>Mostrar Fundo Circular</label>
             <div class="toggle-switch">
-              <input type="checkbox" id="showBg" [(ngModel)]="siteConfig.showBackgroundCircle" (change)="updateConfig()">
+              <input type="checkbox" id="showBg" [(ngModel)]="siteConfig.layout.showCircleBg" (change)="updateConfig()">
               <label for="showBg"></label>
             </div>
           </div>
@@ -90,18 +90,11 @@
         <div class="animation-group">
           <div class="animation-item">
             <label>Velocidade de Animações</label>
-            <select [(ngModel)]="siteConfig.animationSpeed" (change)="updateConfig()">
+            <select [(ngModel)]="siteConfig.animations.speed" (change)="updateConfig()">
               <option value="slow">Lenta</option>
               <option value="normal">Normal</option>
               <option value="fast">Rápida</option>
             </select>
-          </div>
-          <div class="animation-toggle">
-            <label>Ativar Efeito Paralaxe</label>
-            <div class="toggle-switch">
-              <input type="checkbox" id="enableParallax" [(ngModel)]="siteConfig.enableParallax" (change)="updateConfig()">
-              <label for="enableParallax"></label>
-            </div>
           </div>
         </div>
       </div>
@@ -109,7 +102,7 @@
     
     <div class="dashboard-actions">
       <button class="action-button apply" (click)="applyChanges()">Aplicar</button>
-      <button class="action-button save" (click)="saveChanges()">Salvar</button>
+      <button class="action-button save" (click)="saveConfig()">Salvar</button>
       <button class="action-button reset" (click)="resetChanges()">Resetar</button>
     </div>
   </div>
@@ -155,7 +148,7 @@
       <div class="about-content">
         <h2 data-aos="fade-up">Sobre Mim</h2>
         <div class="about-img-container" data-aos="zoom-in">
-          <img [src]="designerInfo.imageUrl" [alt]="designerInfo.name" class="about-img">
+          <img #aboutImg [src]="designerInfo.imageUrl" [alt]="designerInfo.name" class="about-img hidden-profile-img">
         </div>
         <p data-aos="fade-up" data-aos-delay="200">{{ designerInfo.bio }}</p>
       </div>
@@ -196,4 +189,17 @@
       </div>
     </div>
   </section>
+
+  <!-- Notificação -->
+  <div class="notification" *ngIf="showNotificationFlag" [@fadeInOut]>
+    {{ notificationMessage }}
+  </div>
+
+  <!-- Dashboard de Administração -->
+  <div class="admin-toggle" *ngIf="isAdminMode">
+    <button (click)="toggleAdminDashboard()">
+      <i class="fas fa-cog"></i>
+      {{ isAdminDashboardOpen ? 'Fechar' : 'Configurar' }}
+    </button>
+  </div>
 </div>
